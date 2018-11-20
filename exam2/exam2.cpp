@@ -509,51 +509,6 @@ bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty,b
     return true;  //valid command
 }
 
-bool oldSetCommand(string &input, int sets[], map<string, int> uniSet, bool &isEmpty)
-{
-    //remove spaces trailing leading space
-    removeSpace(input);
-
-    unsigned int posSet = input.find("SET");
-    unsigned int posEqual = input.find("=");
-    unsigned int openBracket = input.find("{");
-    unsigned int closeBracket = input.find("{");
-    string output = ""; //result after process RPN expression
-    string strSet = "";
-    int index = -1; //index of a set
-
-
-    //  SET command
-    if (posSet < input.size() && posEqual < input.size())
-    {
-        // get a string between SET command and "=" sign
-        strSet = input.substr(posSet + 3, posEqual + 1);
-        while (strSet[0] == ' ')
-            strSet.erase(0, 1); //remove leading spaces
-
-        //find letter index
-        if ((int)strSet[0] >= 65 || (int)strSet[0] <= 90)
-        {
-            index = (int(strSet[0]) - 65); //get an index of a set
-            if (index < 0)
-            {
-                cout << "The name of a set is invalid;" << endl;
-                return false;
-            }
-        }
-    }
-    else
-        return false; //invalid command
-
-    input = input.substr(posEqual + 1); // get the right expression
-    if (!convertToRPN(input, output))
-        return false;
-    process(output, sets, index, uniSet);
-    isEmpty = false; //turn on Check Empty set
-
-    return true; //valid command
-}
-
 /*  Helper will convert the set of numbers to int
     seperate each number by comma and turn on the bit 
     at index where appears in the set.
