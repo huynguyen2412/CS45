@@ -97,6 +97,7 @@ int main(int argc, char* argv[])
     do
     {
         inputCheck = getInput(line);
+        removeSpace(line);
         if(inputCheck)
         {
             //check if the input is invalid or not
@@ -314,23 +315,19 @@ unsigned int unionOfTwoSets(string x, string y, string &output,int sets[])
     //x is a set letter
     if(x[0] >= 'A' && x[0] <= 'Z')
     {
-        setX = sets[x[0]-'A'];//convert number to bitset
-        // cout << "The bitset X is: " << setX << endl;
-        // cout << "The sets[" << x[0]-'A' << "] is: " << sets[x[0]-'A'] << endl;
+        (sets[x[0]-'A'] == -1)?(setX = 0) : (setX = sets[x[0]-'A']);
+        // setX = sets[x[0]-'A'];//convert number to bitset
     }
     else
         setX = stoul(x,nullptr,0);//convert string --> ulong -->bitset
     //y is a set letter
     if (y[0] >= 'A' && y[0] <= 'Z')
     {
-        setY = sets[y[0]-'A']; //convert number to bitset
-        // cout << "The bitset Y is: " << setX << endl;
-        // cout << "The bitset sets[" << y[0]-'A' << "] is: " << sets[y[0]-'A'] << endl;
+        (sets[y[0]-'A'] == -1)?(setY = 0) : (setY = sets[y[0]-'A']);
+        // setY = sets[y[0]-'A']; //convert number to bitset
     }
     else
         setY = stoul(y,nullptr,0);
-    // cout << "The bitset X is: " << setX << endl;
-    // cout << "The bitset Y is: " << setY << endl;
     //OR bitwise
     setX |= setY;
     output = std::to_string(setX.to_ulong());//convert int setX to string
@@ -349,23 +346,20 @@ unsigned int intersectionOfTwoSets(string x, string y, string &output, int sets[
     //x is a set letter
     if(x[0] >= 'A' && x[0] <= 'Z')
     {
-        setX = sets[x[0]-'A'];//convert number to bitset
-        // cout << "The bitset X is: " << setX << endl;
-        // cout << "The sets[" << x[0]-'A' << "] is: " << sets[x[0]-'A'] << endl;
+        (sets[x[0]-'A'] == -1)?(setX = 0) : (setX = sets[x[0]-'A']);
+        // setX = sets[x[0]-'A'];//convert number to bitset
     }
     else
         setX = stoul(x,nullptr,0);//convert string --> ulong -->bitset
     //y is a set letter
     if (y[0] >= 'A' && y[0] <= 'Z')
     {
-        setY = sets[y[0]-'A']; //convert number to bitset
-        // cout << "The bitset Y is: " << setX << endl;
-        // cout << "The bitset sets[" << y[0]-'A' << "] is: " << sets[y[0]-'A'] << endl;
+        (sets[y[0]-'A'] == -1)?(setY = 0) : (setY = sets[y[0]-'A']);
+        // setY = sets[y[0]-'A']; //convert number to bitset
     }
     else
         setY = stoul(y,nullptr,0);
-    // cout << "The bitset X is: " << setX << endl;
-    // cout << "The bitset Y is: " << setY << endl;
+
     //AND bitwise
     setX &= setY;
     output = std::to_string(setX.to_ulong());
@@ -384,18 +378,16 @@ unsigned int differenceOfTwoSets(string x, string y, string &output, int sets[])
     //x is a set letter
     if(x[0] >= 'A' && x[0] <= 'Z')
     {
-        setX = sets[x[0]-'A'];//convert number to bitset
-        // cout << "The bitset X is: " << setX << endl;
-        // cout << "The sets[" << x[0]-'A' << "] is: " << sets[x[0]-'A'] << endl;
+        (sets[x[0]-'A'] == -1)?(setX = 0) : (setX = sets[x[0]-'A']);
+        // setX = sets[x[0]-'A'];//convert number to bitset
     }
     else
         setX = stoul(x,nullptr,0);//convert string --> ulong -->bitset
     //y is a set letter
     if (y[0] >= 'A' && y[0] <= 'Z')
     {
-        setY = sets[y[0]-'A']; //convert number to bitset
-        // cout << "The bitset Y is: " << setX << endl;
-        // cout << "The bitset sets[" << y[0]-'A' << "] is: " << sets[y[0]-'A'] << endl;
+        (sets[y[0]-'A'] == -1)?(setY = 0) : (setY = sets[y[0]-'A']);
+        // setY = sets[y[0]-'A']; //convert number to bitset
     }
     else
         setY = stoul(y,nullptr,0);
@@ -418,8 +410,6 @@ unsigned int setCompliment(string x, string &output, int sets[])
     if(x[0] >= 'A' && x[0] <= 'Z')
     {
         setX = sets[x[0]-'A'];//convert number to bitset
-        // cout << "The bitset X is: " << setX << endl;
-        // cout << "The sets[" << x[0]-'A' << "] is: " << sets[x[0]-'A'] << endl;
     }
     else
         setX = stoul(x,nullptr,0);//convert string --> ulong -->bitset
@@ -1134,9 +1124,13 @@ bool isCommand(int sets[],string input)
     string compareExp = input.substr(input.find("IS")+2);   //get comparison expression
     removeSpace(compareExp);                                //remove all spaces betweeen two exps
     unsigned int pos = compareExp.find_first_of("<>=");
+    if(pos>compareExp.size())   
+        return false;           //invalid operator
     string op = compareExp.substr(pos,1);                   //get operator
     string setA = compareExp.substr(0,pos);
     string setB = compareExp.substr(pos+1);
+    if((setA[0]+setB[0]) < 130 || (setA[0]+setB[0])>180)
+        return false;   //only accept A-Z
     switch(op[0])
     {        
         case '<': if(checkSubSet(setA,setB,sets))
@@ -1149,10 +1143,10 @@ bool isCommand(int sets[],string input)
                   else
                     cout << "Set "<< setA <<" is not super-set of Set "<< setB<<"."<<endl;
                   return true;   
-        case '=': if(checkSubSet(setA,setB,sets))
-                    cout << "Set "<<setA<<" and Set "<<setB<<" contains same elements."<<endl;
+        case '=': if(checkEqualSet(setA,setB,sets))
+                    cout << "Set "<<setA<<" and Set "<<setB<<" contain same elements."<<endl;
                   else
-                    cout << "Set "<<setA<<" and Set "<<setB<<" NOT contains same elements."<<endl;
+                    cout << "Set "<<setA<<" and Set "<<setB<<" NOT contain same elements."<<endl;
                   return true;                   
         default:  return false;
                   break;      
