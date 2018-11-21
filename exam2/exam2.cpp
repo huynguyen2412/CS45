@@ -1,9 +1,10 @@
 /*
   CS45 DISCRETE STRUCTURES WITH COMPUTER SCIENCE APPLICATIONS
   Professor PAUL WILKINSON
-  Tom Nguyen
+  Tom Nguyen and Kyle Benalcazar
   Test 2
 */
+
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -11,14 +12,14 @@
 #include <string>
 #include <array>
 #include <fstream>
-#include <algorithm> 
+#include <algorithm>
 #include <iterator>
 #include <map>
 #include <utility>
 #include <math.h>
 
 using namespace std;
- 
+
 bool illegalSet(string input);
 int whoIsFirst(const string &incoming);
 bool precedence(const string &incoming, const string &tos);
@@ -36,7 +37,7 @@ void removeSpace(string& input);
 bool helpCommand(string input);
 bool checkFileName(string fileName);
 bool saveHelper(string fileName, int sets[],bool& checkSaved);
-// bool setCommand(string &input, int sets[],bool& isEmpty);
+bool setCommand(string &input, int sets[],bool& isEmpty);
 bool setHelper(string& input,unsigned int& setNum);
 bool saveCommand(int sets[], string& input,bool& checkSaved,bool& isEmpty);
 void loadHelper(int sets[],string fileName,bool& isEmpty,bool& hasSaved);
@@ -68,10 +69,10 @@ int main(int argc, char* argv[])
     bool hasSaved = false;          //Check SAVE before exiting program
     bool isEmpty = true;          //Check if the set is empty
     bool inputCheck = false;
-    for(int i=0;i<26;++i)          //intial value for each setset 
+    for(int i=0;i<26;++i)          //intial value for each setset
         sets[i]= -1;
 
-    /*  Using argv and argc to load a file 
+    /*  Using argv and argc to load a file
         User must be enter the name of program to run
         follow with LOAD command and fileName.
     */
@@ -79,7 +80,7 @@ int main(int argc, char* argv[])
     {
         //convert LOAD command to upper.
         string loadCommand(argv[1]);
-        transform(loadCommand.begin(), loadCommand.end(), loadCommand.begin(), ::toupper);      
+        transform(loadCommand.begin(), loadCommand.end(), loadCommand.begin(), ::toupper);
         if(!(loadCommand == "LOAD"))
             cout << "LOAD command invalid."<<endl;
         else if (argv[2] == nullptr)
@@ -87,8 +88,8 @@ int main(int argc, char* argv[])
         else
         {
             string fileName(argv[2]);       //get fileName
-            transform(fileName.begin(), fileName.end(), fileName.begin(), ::toupper);      
-            loadHelper(sets,fileName,isEmpty,hasSaved);    
+            transform(fileName.begin(), fileName.end(), fileName.begin(), ::toupper);
+            loadHelper(sets,fileName,isEmpty,hasSaved);
         }
     }
     else if(argc>3)
@@ -116,21 +117,21 @@ int main(int argc, char* argv[])
                 exitCommand(sets, hasSaved, isEmpty);
             else
                 exit(0);    //exit without saving
-        }                
+        }
     }while(inputCheck);           //As long as there is input from the keyboard
     return 0;
 }
- 
+
 bool getInput(string &line)
 {
-    cout<<"In-fix expression: ";
+    cout<<"Input: ";
     getline(cin, line);                           //Get infix expression
     fflush(stdin);                                //Clear input buffer
     for(unsigned int i = 0; i < line.size(); ++i) //standardize set names to uppercase
         line[i] = toupper(line[i]);
     return line != "";                            //see if the line was empty
 }
- 
+
 int whoIsFirst(const string &incoming) //Convert operator to its precedence value
 {
     int value = 0;
@@ -145,7 +146,7 @@ int whoIsFirst(const string &incoming) //Convert operator to its precedence valu
     }
     return value;
 }
- 
+
 bool illegalSet(string input)          //See if the user entered a double comma or something
 {                                      //like {, or ;}
     unsigned int pos, size = input.size();
@@ -158,12 +159,12 @@ bool illegalSet(string input)          //See if the user entered a double comma 
             input.find("}}") < size ||
             input.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ{,}") < size);
 }
- 
+
 bool precedence(const string &incoming, const string &tos) //Return TRUE is incoming operator
 {
      return whoIsFirst(incoming) < whoIsFirst(tos);  //is less than what is on the top of the operator stack
 }
- 
+
 bool convertToRPN(string input, string &output)
 {
       vector<string>  operatorStack;                //Holds operators
@@ -240,7 +241,7 @@ bool process(string rpn, int sets[], int index, map<string, int> uniSet) //Proce
     vector<string> operandStack;        //Create an operand and operator stack
     vector<char> operatorStack;
     string set, x, y, output;           //Create some temporary variables
-    cout<<"Translated to RPN: "<< rpn <<endl;
+    // cout<<"Translated to RPN: "<< rpn <<endl;
     while(rpn.size() > 0)               //As long as there are inputs available
     {
         if(rpn[0] >= 'A' && rpn[0] <= 'Z') //If a named set, push onto the operand stack
@@ -258,7 +259,7 @@ bool process(string rpn, int sets[], int index, map<string, int> uniSet) //Proce
                             break;
                 case '{' :  pos = rpn.find('}');//If curly braces, get the unnamed set
                             set = (rpn.substr(0, pos + 1));
-                            // operandStack.push_back(set); //and push it onto the operand stack                                                        
+                            // operandStack.push_back(set); //and push it onto the operand stack
                             // cout << "num after converted from set: " << std::to_string((setHelper(set).to_ulong())) << endl;
                             if(!uniHelper(set,result,uniSet))
                                 return false;   //invalid
@@ -301,8 +302,8 @@ bool process(string rpn, int sets[], int index, map<string, int> uniSet) //Proce
     //assign the elements to a set with index
     sets[index] = result;
 }
- 
- 
+
+
 //The functions below are for you to complete. You can use bitset or ints, but you will have to
 //adjust the function above to work correctly with bitsets
 unsigned int unionOfTwoSets(string x, string y, string &output,int sets[])
@@ -335,7 +336,7 @@ unsigned int unionOfTwoSets(string x, string y, string &output,int sets[])
     // cout << "The output after OR is: " << output << endl;
     return setX.to_ulong();
 }
- 
+
 unsigned int intersectionOfTwoSets(string x, string y, string &output, int sets[])
 {
     bitset<16> setX = 0;
@@ -367,7 +368,7 @@ unsigned int intersectionOfTwoSets(string x, string y, string &output, int sets[
     // cout << "The output after AND is: " << output << endl;
     return setX.to_ulong();
 }
- 
+
 unsigned int differenceOfTwoSets(string x, string y, string &output, int sets[])
 {
     bitset<16> setX = 0;
@@ -401,7 +402,7 @@ unsigned int differenceOfTwoSets(string x, string y, string &output, int sets[])
     // cout << "The output after \"difference\" is: " << output << endl;
     return setX.to_ulong();
 }
- 
+
 unsigned int setCompliment(string x, string &output, int sets[])
 {
     bitset<16> setX = 0;
@@ -423,7 +424,7 @@ unsigned int setCompliment(string x, string &output, int sets[])
 }
 
 
-/*  This function will read the command(SET) 
+/*  This function will read the command(SET)
     from the user's input. If it's SET command, get the right expression
     assign to string array. Then get the first letter to determine the index of a set.
     If there is not "SET" command or "equal" sign, print an error message as an invalid input
@@ -434,7 +435,7 @@ unsigned int setCompliment(string x, string &output, int sets[])
 bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty,bool& checkSaved)
 {
     //remove spaces trailing leading space
-    removeSpace(input);    
+    removeSpace(input);
 
     unsigned int posSet = input.find("SET");
     unsigned int posEqual = input.find("=");
@@ -444,31 +445,41 @@ bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty,b
     int index = -1; //index of a set
     string output = ""; //result after process RPN expression
     string strSet = "";
+    string newStrSet;
     string expression = input.substr(posEqual+1);
     removeSpace(expression);
 
-    //  get a letter of a SET command 
-    if (posSet < input.size() && posEqual < input.size())
+    //  get a letter of a SET command
+    if(posSet < input.size() && posEqual < input.size())
     {
+
         // get a string between SET command and "=" sign
         strSet = input.substr(posSet + 3, posEqual + 1);
-        while (strSet[0] == ' ')
-            strSet.erase(0, 1); //remove leading spaces
+        newStrSet = strSet.substr(posSet, posEqual);
+
+        if(newStrSet[1] != '=')
+        {
+            return false;
+        }
+
+        removeSpace(strSet); //remove leading spaces
 
         //find letter index
-        if ((int)strSet[0] >= 65 || (int)strSet[0] <= 90)
+        if((int)strSet[0] >= 65 && (int)strSet[0] <= 90)
         {
             index = (int(strSet[0]) - 65); //get an index of a set
-            if(index<0)
+            /*if(index<=0 || (index >= 26 && index <= 70) || index >=97)
             {
                 cout << "The name of a set is invalid;" <<endl;
                 return false;
-            }
-        }  
+            }*/
+        }
+        else
+            return false;
     }
     else
         return false;   //invalid command
-    
+
     //Aternative entry of sets, NOT include "{"
     if ((openBracket > input.size() || closeBracket > input.size()))
     {
@@ -477,7 +488,7 @@ bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty,b
         unsigned int setNum;
         if(check1 < expression.size() && check2 < expression.size())
             return false;       //invalid command, numbers and letters can be mixed
-          
+
         //if entry is an alternative of sets
         //only numbers are allowed
         if(check1 > expression.size() && check2 < expression.size())
@@ -509,8 +520,53 @@ bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty,b
     return true;  //valid command
 }
 
+bool oldSetCommand(string &input, int sets[], map<string, int> uniSet, bool &isEmpty)
+{
+    //remove spaces trailing leading space
+    removeSpace(input);
+
+    unsigned int posSet = input.find("SET");
+    unsigned int posEqual = input.find("=");
+    unsigned int openBracket = input.find("{");
+    unsigned int closeBracket = input.find("{");
+    string output = ""; //result after process RPN expression
+    string strSet = "";
+    int index = -1; //index of a set
+
+
+    //  SET command
+    if (posSet < input.size() && posEqual < input.size())
+    {
+        // get a string between SET command and "=" sign
+        strSet = input.substr(posSet + 3, posEqual + 1);
+        while (strSet[0] == ' ')
+            strSet.erase(0, 1); //remove leading spaces
+
+        //find letter index
+        if ((int)strSet[0] >= 65 || (int)strSet[0] <= 90)
+        {
+            index = (int(strSet[0]) - 65); //get an index of a set
+            if (index < 0)
+            {
+                cout << "The name of a set is invalid;" << endl;
+                return false;
+            }
+        }
+    }
+    else
+        return false; //invalid command
+
+    input = input.substr(posEqual + 1); // get the right expression
+    if (!convertToRPN(input, output))
+        return false;
+    process(output, sets, index, uniSet);
+    isEmpty = false; //turn on Check Empty set
+
+    return true; //valid command
+}
+
 /*  Helper will convert the set of numbers to int
-    seperate each number by comma and turn on the bit 
+    seperate each number by comma and turn on the bit
     at index where appears in the set.
 */
 bool setHelper(string& input,unsigned int& setNum)
@@ -561,7 +617,7 @@ bool setHelper(string& input,unsigned int& setNum)
     return true;
 }
 
-/* 
+/*
     Convert a number to bitset, then loop through the bit array
     Map the index correspond the color, and print that color
  */
@@ -619,12 +675,12 @@ bool commandHelper(string input,unsigned int& index)
             case 'S' :  if(commandMatching(input,"SET",3))
                         {
                             index = 0;          //NEW
-                            return true;                           
+                            return true;
                         }
                         else if(commandMatching(input,"SAVE",4))
                         {
                             index = 1;          //SAVE
-                            return true;                           
+                            return true;
                         }
                         else if(commandMatching(input, "SHOW", 4))
                         {
@@ -635,13 +691,13 @@ bool commandHelper(string input,unsigned int& index)
             case 'H' :  if(commandMatching(input,"HELP",4))
                         {
                             index = 2;          //HELP
-                            return true;                           
+                            return true;
                         }
                         else return false;
             case 'L' :  if(commandMatching(input,"LOAD",4))
                         {
                             index = 4;          //LOAD
-                            return true;                           
+                            return true;
                         }
                         else if(commandMatching(input, "LIST", 4))
                         {
@@ -651,9 +707,9 @@ bool commandHelper(string input,unsigned int& index)
             case 'I' :  if(commandMatching(input,"IS",2))
                         {
                             index = 5;          //LOAD
-                            return true;                           
-                        }                                                                                                                                                                               
-            default:    return false;   //invalid command                                            
+                            return true;
+                        }
+            default:    return false;   //invalid command
         }
     }
 }
@@ -668,8 +724,8 @@ bool commandInput(string &input, int sets[], map<string, int> uniSet,map<int,str
     //check valid command
     if(!commandHelper(input,index))
         return false;
-    
-    
+
+
     switch (index)
     {
         case 0:
@@ -719,12 +775,12 @@ bool helpCommand(string input)
 }
 
 
-//check if File Name already exist 
+//check if File Name already exist
 //return true if exists ; otherwise false
 bool checkFileName(string fileName)
 {
     ifstream file(fileName);
-    return (bool)file; 
+    return (bool)file;
 }
 
 
@@ -761,7 +817,7 @@ bool question(string title)
 }
 
 
-//Create a new file 
+//Create a new file
 //if file already exists, overwrite it or give another file name
 //return true if checkFileName
 bool saveHelper(string fileName, int sets[],bool& hasSaved)
@@ -797,8 +853,24 @@ bool saveHelper(string fileName, int sets[],bool& hasSaved)
             }
             rename(fileName.c_str(), ans.c_str());
             cout << "File successfully renamed." << endl;
-            saveFile(ans,sets,hasSaved);
             return true;
+          }
+          else if(question("Would you like to create new file(Y/N): "))
+          {
+              cout << "Enter new file name: " << endl;
+              getline(cin, ans);
+              removeSpace(ans);
+              transform(ans.begin(), ans.end(), ans.begin(), ::toupper);
+              //check extension missing
+              while(checkFileName(ans))
+              {
+                  cout << "File already exists. Please enter another name:" << endl;
+                  getline(cin, ans);
+                  transform(ans.begin(), ans.end(), ans.begin(), ::toupper);
+              }
+              saveFile(ans,sets,hasSaved);
+              cout << "File successfully created." << endl;
+
           }
           else if(question("Would you like to erase the current file(Y/N): "))
           {
@@ -872,24 +944,24 @@ void loadHelper(int sets[],string fileName,bool& isEmpty,bool& hasSaved)
 //print a particular set
 bool showCommand(int *sets, string input, map<int, string> uniSet)
 {
-    int pos = 0;                           //get LIST index in the input string  
+    int pos = 0;                           //get LIST index in the input string
     removeSpace(input);
     pos = input.find("SHOW");
     string command = input.substr(pos,4);   //get "SHOW" string
-    string setIndex = input.substr(pos+4);  //get set number want to see the content   
+    string setIndex = input.substr(pos+4);  //get set number want to see the content
     removeSpace(setIndex);
     if(setIndex == "")
     {
         cout<<"Missing the name of a set."<<endl;
         return true;
     }
-    else 
+    else
     {
         int setName = int(setIndex[0]); //set name in char
-        if(setName<65 || setName>90)        
+        if(setName<65 || setName>90)
             cout<<"Index of the set is invalid or out of range (A-Z)."<<endl;
         else
-        {            
+        {
             if(sets[setName-65] != -1)
             {
                 cout << char(setName) << " = ";
@@ -946,7 +1018,7 @@ void forwardUniverse(map<string, int> &uniSet)
   uniSet["YELLOW"]  = 8;
   uniSet["VIOLET"]  = 9;
   uniSet["MAGENTA"] = 10;
-  uniSet["CYAN"]    = 11; 
+  uniSet["CYAN"]    = 11;
   uniSet["RUST"]    = 12;
   uniSet["NAVY"]    = 13;
   uniSet["BURGUNDY"]= 14;
@@ -967,7 +1039,7 @@ void reverseUniverse(map<int, string> &revSet)
   revSet[8]   = "YELLOW";
   revSet[9]   = "VIOLET";
   revSet[10]  = "MAGENTA";
-  revSet[11]  = "CYAN"; 
+  revSet[11]  = "CYAN";
   revSet[12]  = "RUST";
   revSet[13]  = "NAVY";
   revSet[14]  = "BURGUNDY";
@@ -1040,7 +1112,7 @@ bool uniHelper(string input, unsigned int &setNum, map<string, int> uniMap)
     Suppose setB is greater than setA
  */
 bool checkSubSet(string setA,string setB,int sets[])
-{    
+{
     bitset<16> bitA = sets[setA[0]-'A'];
     bitset<16> bitB = sets[setB[0]-'A'];
     // cout << "The bitset of bitA: " <<bitA.to_string()<<endl;
@@ -1071,7 +1143,7 @@ bool checkEqualSet(string setA,string setB,int sets[])
 }
 
 
-/*  Call checkSubSet to determine 
+/*  Call checkSubSet to determine
     subset or super set
  */
 bool isCommand(int sets[],string input)
@@ -1079,7 +1151,7 @@ bool isCommand(int sets[],string input)
     string compareExp = input.substr(input.find("IS")+2);   //get comparison expression
     removeSpace(compareExp);                                //remove all spaces betweeen two exps
     unsigned int pos = compareExp.find_first_of("<>=");
-    if(pos>compareExp.size())   
+    if(pos>compareExp.size())
         return false;           //invalid operator
     string op = compareExp.substr(pos,1);                   //get operator
     string setA = compareExp.substr(0,pos);
@@ -1087,7 +1159,7 @@ bool isCommand(int sets[],string input)
     if((setA[0]+setB[0]) < 130 || (setA[0]+setB[0])>180)
         return false;   //only accept A-Z
     switch(op[0])
-    {        
+    {
         case '<': if(checkSubSet(setA,setB,sets))
                     cout << "Set "<< setA <<" is subset of Set "<< setB<<"."<<endl;
                   else
@@ -1097,20 +1169,20 @@ bool isCommand(int sets[],string input)
                     cout << "Set "<< setA <<" is super-set of Set "<< setB<<"."<<endl;
                   else
                     cout << "Set "<< setA <<" is not super-set of Set "<< setB<<"."<<endl;
-                  return true;   
+                  return true;
         case '=': if(checkEqualSet(setA,setB,sets))
                     cout << "Set "<<setA<<" and Set "<<setB<<" contain same elements."<<endl;
                   else
                     cout << "Set "<<setA<<" and Set "<<setB<<" NOT contain same elements."<<endl;
-                  return true;                   
+                  return true;
         default:  return false;
-                  break;      
-    }          
+                  break;
+    }
     return false;   //invalid command
 }
 
 
-/* 
+/*
     Create a file with fileName,
     Loop through the sets[], write each element into the file, delimited by ";"
 */
@@ -1131,11 +1203,11 @@ void saveFile(string fileName,int sets[],bool& hasSaved)
 void exitCommand(int sets[],bool hasSaved,bool isEmpty)
 {
     string ans = "";
-    
+
     //ask you to save before exit
     if(!hasSaved && !isEmpty)
     {
-        cout << "Would you like to save your changes(Y/N): "; 
+        cout << "Would you like to save your changes(Y/N): ";
         getline(cin,ans);
         transform(ans.begin(),ans.end(),ans.begin(),::toupper);         //convert to upper case
         if(ans == "Y" || ans == "YES")
@@ -1145,11 +1217,10 @@ void exitCommand(int sets[],bool hasSaved,bool isEmpty)
             getline(cin,fileName);
             transform(fileName.begin(), fileName.end(), fileName.begin(), ::toupper);
             //call saveHelper to process save command
-            saveHelper(fileName,sets,hasSaved);           
+            saveHelper(fileName,sets,hasSaved);
         }
     }
     else
         exit(0);    //totalExpression is empty
     exit(0);//close program
 }
-
