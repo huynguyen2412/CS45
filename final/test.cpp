@@ -9,6 +9,9 @@ bool checkForward(char input);
 void minusPlusHelper(string &input,unsigned long long &firstPos);
 bool getInput(string &line);
 void unaryHelper(string &exp);
+bool isLetter(char i);
+bool isNumber(char i);
+
 
 int main(int argc, char const *argv[])
 {
@@ -157,7 +160,7 @@ bool isFraction(string& exp,bool noSpace,int pos)
         while(pos < exp.size() && exp[pos+1] == ' ')
             exp.erase(pos++,1);
         //Denominator is an expression
-        if(exp[pos])
+        while((exp[pos++] >= '0' && exp[pos++] <= '9') || (exp[pos++] >= 'A' && exp[pos++] <= 'B'))
     }
 }
 
@@ -166,4 +169,16 @@ void removeTrailing(string& exp)
 {
     while(exp.peek() == ' ')
         exp.erase(pos++,1);
+}
+
+//Check a char is number
+bool isNumber(char i)
+{
+    return (i >= '0' && i <= '9');
+}
+
+//Check a char is letter
+bool isLetter(char i)
+{
+    return (i >= 'A' && i <= 'B');
 }
