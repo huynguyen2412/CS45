@@ -5,6 +5,7 @@ using namespace std;
 
 void reduceSign(string &input);
 bool checkPrevious(char input);
+bool checkForward(char input);
 void minusPlusHelper(string &input,unsigned long long &firstPos);
 bool getInput(string &line);
 void unaryHelper(string &exp);
@@ -19,6 +20,7 @@ int main(int argc, char const *argv[])
         cout << line<<endl;
         unaryHelper(line);
         cout << line<<endl;
+        cout << "--------\n";
     }
     return 0;
 }
@@ -42,16 +44,35 @@ void reduceSign(string &input)
     while(input[pos])
     {       
         if(input[pos] == '-' || input[pos] == '+')
+        {
+            while(input[pos+1] == ' ')
+                input.erase(pos+1,1);       //remove extra space after binary - +
             minusPlusHelper(input,pos);
+        }
+        else if(input[pos] == '*' || input[pos] == '/')
+        {
+            while(input[pos+1] == ' ')
+                input.erase(pos+1,1);       //remove extra space after binary - +
+            pos++;
+        }
         else pos++;
     }
 }
 
-// Return true if previous character is A-Z , 0-9, ')', or '!'
+// Return true if previous character is A-Z , 0-9, ')', '!', or ' '
 bool checkPrevious(char input)
 {
-    string temp = input +" ";
-    return (temp.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789)! "));
+    return  (input >= 'A' && input <= 'Z') 
+            || (input == '!' || input == ')' ) 
+            || (input >= '0' && input <= '9');
+}
+
+// Return true if previous character is A-Z , 0-9, '(', or ' '
+bool checkForward(char input)
+{
+    return  (input >= 'A' && input <= 'Z') 
+            || (input == '(' ) 
+            || (input >= '0' && input <= '9');
 }
 
 
@@ -87,14 +108,62 @@ void unaryHelper(string &exp)
     {
         //unary case 
         if(exp[i] == '-' || exp[i] == '+')
-            if(exp[i] == '-')
-                !checkPrevious(exp[i-1]) ? exp[i++] = '#':exp[i++];     //replace unary by '#'
-            else
-            {    
-                if(!checkPrevious(exp[i - 1])) 
-                    exp.erase(i,1); //remove '+' unary
+            if( (exp[i-1] == ' ' && exp[i+1] == ' ')
+                 || (exp[i-1] == ' ' && checkForward(exp[i+1]))
+                 || (checkPrevious(exp[i-1]) && exp[i+1] == ' ')
+                 || (checkPrevious(exp[i-1]) && checkForward(exp[i+1]))
+                )
+            {
                 i++;
-            }                            
-        else i++;                                                   //if it's not '+' or '-'
-    } 
+            }
+            else 
+                exp[i] == '-' ? (void) (exp[i++] = '#') : (void)exp.erase(i++,1);
+        else i++;
+        /* original code (Not Removed) */
+        //     if(exp[i] == '-')
+        //     {
+        //         if(!checkPrevious(exp[i-1]) && !checkForward(exp[i+1]))
+        //             exp[i++] = '#';
+        //         else i++;
+        //     }
+        //         // !checkPrevious(exp[i-1]) || !checkForward(exp[i-1]) ? exp[i++] = '#': i++;     //replace unary by '#'
+        //     else  
+        //         if(!checkPrevious(exp[i - 1]) && !checkForward(exp[i+1])) 
+        //             exp.erase(i++,1); //remove '+' unary
+        //         else
+        //             i++;                    
+        // else i++;                                                   //if it's not '+' or '-'
+        /* original code (Not Removed) */
+
+    }
+}
+
+
+/*  Detect the fraction 
+    When the pointer read a space, check substring next to it.
+    If it form A/B and a char after denominator B is one of following 
+    chars '+-/*! ', it's a fraction.
+    Remove all extra space between denominator and numerator
+    otherwise, return false;
+    @pos: the current index where starting to find fraction
+    @noSpace: to distinguish between mixed number and fraction
+*/
+bool isFraction(string& exp,bool noSpace,int pos)
+{
+    //search until finding the list of operator 
+    if(noSpace)
+    {
+        //remove leading spaces 32/          ( 2 +5)
+        while(pos < exp.size() && exp[pos+1] == ' ')
+            exp.erase(pos++,1);
+        //Denominator is an expression
+        if(exp[pos])
+    }
+}
+
+//remove trailing space
+void removeTrailing(string& exp)
+{
+    while(exp.peek() == ' ')
+        exp.erase(pos++,1);
 }
