@@ -11,7 +11,7 @@ bool getInput(string &line);
 void unaryHelper(string &exp);
 bool isLetter(char i);
 bool isNumber(char i);
-
+void removeTrailing(string& exp, unsigned long long pos);
 
 int main(int argc, char const *argv[])
 {
@@ -157,17 +157,16 @@ bool isFraction(string& exp,bool noSpace,int pos)
     if(noSpace)
     {
         //remove leading spaces 32/          ( 2 +5)
-        while(pos < exp.size() && exp[pos+1] == ' ')
-            exp.erase(pos++,1);
+        removeTrailing(exp,pos);
         //Denominator is an expression
         while((exp[pos++] >= '0' && exp[pos++] <= '9') || (exp[pos++] >= 'A' && exp[pos++] <= 'B'))
     }
 }
 
 //remove trailing space
-void removeTrailing(string& exp)
+void removeTrailing(string& exp, unsigned long long pos)
 {
-    while(exp.peek() == ' ')
+    while(pos < exp.size() && exp[pos+1] == ' ')
         exp.erase(pos++,1);
 }
 

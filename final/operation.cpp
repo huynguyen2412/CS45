@@ -12,6 +12,9 @@ string reverse(const string &input);
 string subtract(const string &one, const string &two);
 string subtractHelper(const string &one, const string &two);
 string addition(const string &one, const string &two);
+string additionHelper(const string &one, const string &two);
+string multiply(const string &one, const string &two);
+string multiplyHelper(const string &one, const string &two);
 string trim(string line);
 bool getInput(string &one, char &op, string &two);
 bool parseLine(const string &line, string &one, char &op, string &two);
@@ -31,13 +34,14 @@ int main()
     char op;
     while(getInput(one, op, two))
         perform(one,op,two);
- 
+    
     return 0;
 }
  
 void display(const string &one, char op,const string &two,const string &ans)
 {
     cout<<one<<" "<<op<<" "<< two<<" = "<<ans<<endl;
+    cout<<"-----------------\n";
 }
  
  
@@ -95,7 +99,15 @@ void trimLeadingZeros(string &input)
  */
 string subtract(const string &one, const string &two)
 {
-    return compare(one,two) == 1 ? subtractHelper(one,two): ('-' + subtractHelper(two,one));
+    //-A-B <=> -(A+B)
+    if(one[0] == '-')
+        return '-' + addition(one.substr(1),two);
+    else        //A-B
+    {
+        string temp = (compare(one,two) == 1 ? 
+                            subtractHelper(one,two): ('-' + subtractHelper(two,one)));
+        return temp == "-0" ? temp.substr(1) : temp;
+    }
 }
 
  
@@ -126,12 +138,31 @@ void perform(const string &one, char op, const string &two)
         case '-' : ans = subtract(one, two);
                    break;
         case '+' : ans = addition(one,two);
+                    break;
+        case '*' : ans = multiply(one,two);           
     }
     display(one, op, two, ans);
 }
  
- 
+
 string addition(const string &one, const string &two)
+{
+    //convert -A+B <=> -(A-B)
+    //A>B <=> '-' ||  A<B <=> '+' 
+    if(one[0]=='-')                             
+    {
+        string temp = (compare(one.substr(1),two) == 1 ? 
+                        '-' + subtract(one.substr(1),two) : subtract(two,one.substr(1)));
+        return temp == "-0" ? temp.substr(1) : temp;
+    }
+    else
+        return additionHelper(one,two);
+}
+
+//reverse two numbers
+//if sum of two numbers is great 10, carry one and add to next number.
+//reverse the string and return
+string additionHelper(const string &one, const string &two)
 {
     string oneR = reverse(one), twoR = reverse(two), ans;
     int padding = maxSize(oneR.size(), twoR.size()) + 1;
@@ -142,14 +173,15 @@ string addition(const string &one, const string &two)
     for(int i = 0; i < oneR.size(); ++i)
     {
         digit = toDigit(oneR[i]) + (toDigit(twoR[i]) + carry);
-        if((carry = digit > 10))
+        if((carry = digit >= 10))
             digit -= 10;
         ans += toChar(digit);
     }
     trimLeadingZeros(ans);
     return  reverse(ans);
 }
- 
+
+//find an char is not belong to a set of specific chars. 
 bool illegalChar(const string &line, const string &validChar)
 {
     return line.find_first_not_of(validChar) < line.size();
@@ -177,10 +209,21 @@ string trim(string line)
 /*  Split the numerator and denominator */
 bool breakApart(const string &line, string &one, char &op, string &two)
 {
-    int pos = line.find_first_of("-+*/");
-    op = line[pos];
-    one = trim(line.substr(0,pos));
-    two = trim(line.substr(pos+1));
+    //first number is negative -A/B
+    if(line[0]=='-')
+    {
+        int pos = line.find_first_of("-+*/",1);
+        op = line[pos];
+        one = trim(line.substr(0,pos));
+        two = trim(line.substr(pos+1));
+    }
+    else
+    {
+        int pos = line.find_first_of("-+*/");
+        op = line[pos];
+        one = trim(line.substr(0,pos));
+        two = trim(line.substr(pos+1));
+    }
     return true;
 }
  
@@ -199,12 +242,40 @@ bool getInput(string &one, char &op, string &two)
 */
 int compare(string first, string second)
 {
-    int i = 0;
+    unsigned long long i =0;
+    if(first.size() != second.size())
+        return first.size() > second.size() ? 1 : 2;       //A>B ? 1 : 2
+    else
+    {
+        //stop when one of most significant digits of two numbers is greater than the other.
+        while((first[i]==second[i]) && i < first.size()){i++;}
+        return toDigit(first[i]) > toDigit(second[i]) ? 1 : 2;     //A>B ? 1 : 2
+                                                                    //A=B -> 2
+    }
+}
+
+
+string multiply(const string &one, const string &two)
+{
+    return multiplyHelper(one,two);
+}
+
+/*  Repeat n-times the sum of either one or two 
+    With n is the number one or two.
+    Return the total of sum.
+ */
+string multiplyHelper(const string &one, const string &two)
+{
+    int whoLarge = compare(one,two);
+    string count = "0";
+    string largeNum = "0";
     string result = "";
-    int padding = maxSize(first.size(),second.size());
-    padLeading(first,padding);
-    padLeading(second,padding);
-    //stop when one of most significant digits of two numbers is greater than the other.
-    while(first[i++]==second[i++]){}                   
-    return toDigit(first[i]) > toDigit(second[i]) ? 1 : 2;     
+    whoLarge == 1 ?  largeNum = two : largeNum = one;  //get n
+    while(compare(largeNum,count) == 1)
+    {
+        result = (whoLarge == 1 ? addition(one,result) : addition(two,result));
+        count = addition(count,"1");
+    }
+    cout << "Total of count: "<<count<<endl;
+    return result;
 }
