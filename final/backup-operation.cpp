@@ -6,14 +6,14 @@
 */
 #include "operation.h"
 
-// int main()
-// {
-//     string one, two;
-//     char op;
-//     while(getInput(one, op, two))
-//         perform(one, op, two);
-//     return 0;
-// }
+int main()
+{
+    string one, two;
+    char op;
+    while(getInput(one, op, two))
+        perform(one, op, two);
+    return 0;
+}
  
 void display(const string &one, char op,const string &two,const string &ans)
 {
@@ -232,13 +232,13 @@ bool breakApart(const string &line, string &one, char &op, string &two)
     return true;
 }
  
-// bool getInput(string &one, char &op, string &two)
-// {
-//     string line;
-//     cout<<"Expression: ";
-//     getline(cin, line);
-//     return parseLine(line, one, op, two);
-// }
+bool getInput(string &one, char &op, string &two)
+{
+    string line;
+    cout<<"Expression: ";
+    getline(cin, line);
+    return parseLine(line, one, op, two);
+}
 
 
 /*  Compare two non-negative numbers 
