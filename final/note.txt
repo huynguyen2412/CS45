@@ -1,0 +1,10 @@
+--------Fraction--------
++   Need to handle the case after fraction must an operator 
+    If it's '(' return false
++   Detect denominator is 0
++   If parser read a space and next char is an operator
+    it should remove that space, not detect fraction
++   Numerator can be an expression
+
+-----ConvertToRPN------
++   Can't have two or more operator if the expression only includes numbers.
