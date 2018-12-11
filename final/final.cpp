@@ -48,9 +48,10 @@ bool listCommand(int *sets, string input);
 bool question(string title);
 void leadingTrailing(string &input);
 bool isFraction(string &input, bool noSpace, unsigned long long pos, unsigned long long &fracPos);
-bool isNumOrLetter(char i);
+bool notNumOrLetter(char i);
 void removeTrailing(string &exp, unsigned long long pos);
 bool notLegalChar(char i,string invalidSet);
+void getNum(string &input,string &operand);
 
 int main(int argc, char *argv[])
 {
@@ -58,7 +59,7 @@ int main(int argc, char *argv[])
     string line, output="";            //Create input (line) and output (output) variables for functions to use
     int sets[26] = {};              //Create a 26 element array of sets
     bool hasSaved = false;          //Check SAVE before exiting program
-    bool isEmpty = true;            //Check if the set is empty
+    bool isEmpty = true;            //Check if the set is empty 
     bool inputCheck = false;
     for(int i=0;i<26;++i)          //intial value for each setset
         sets[i]= -1;
@@ -67,8 +68,10 @@ int main(int argc, char *argv[])
     {
         parsing(line);
         cout<<line<<endl;
-        convertToRPN(line,output);
-        process(output,sets,1);
+        if(convertToRPN(line,output))
+            process(output,sets,1);
+        else
+            cout<<"Invalid expression\n";
         cout << "--------\n";
     }
     // cout << "Illegal command! Please type HELP for the instructions." << endl;
@@ -91,7 +94,9 @@ int whoIsFirst(const string &incoming) //Convert operator to its precedence valu
     int value = 0;
     switch(incoming[0])
     {
-        case '!' : value = 4;          //factorial has highest precedence
+        case '!' : value = 5;          //factorial has highest precedence
+                   break;
+        case '$' : value = 4;          //mixed number
                    break;
         case '~' : value = 3;          //fraction
                    break;
@@ -135,9 +140,14 @@ bool convertToRPN(string input, string &output)
         }
         else if(input[0]>='0' && input[0] <= '9')        
         {
-            operand = input[0];
-            output += operand;                     //add a digit to a string number
-            input.erase(0,1);t
+            // getNum(input,operand);
+            while (input[0] >= '0' && input[0] <= '9')
+            {
+                operand += input[0];
+                input.erase(0, 1);
+            }
+            output += operand + " ";
+            number = true;
         }        
         else
         {
@@ -151,10 +161,11 @@ bool convertToRPN(string input, string &output)
                                 return false;                       //invalid fraction format
                             else
                             {
-                                input[fracPos] = '~';               //replace '/' by fraction '~'
+                                input[fracPos] = '$';               //mixed number appear
                                 input.erase(0,1);                   //get rid of space 
                             }
                             break;
+                case '$' :
                 case '~' :
                 case '!' :
                 case '*' :                          //If it is any valid operator
@@ -165,8 +176,8 @@ bool convertToRPN(string input, string &output)
                             if(numOp++ > 1 && number) return false; //only one operator accept if expression is all numbers
                             //handle fraction
                             if(op == "/")
-                            {
-                                if(!isFraction(input,true,0,fracPos)) return false; //invalid fraction input
+                            {                           //v-start after oprator '/'
+                                if(!isFraction(input,true,1,fracPos)) return false; //invalid fraction input
                                 input[fracPos] = '~';
                                 break;
                             }                        
@@ -204,6 +215,7 @@ bool convertToRPN(string input, string &output)
         output += op + " ";
         operatorStack.pop_back();
     }
+    cout<<"Output is: "<<output<<endl;
     return true;                      //Signify a successful conversion to RPN
 }
 
@@ -847,11 +859,15 @@ bool isFraction(string &input, bool noSpace, unsigned long long pos,unsigned lon
     //mixed number
     if(!noSpace) 
     {
-        if (isNumOrLetter(input[++pos]))
-            return false; //not a mixed number
-        removeTrailing(input,pos+1);            //remove extra spaces following numerator
-        //A    /B
-        if(input[pos] != '/')   
+        //check numerator (no expression included)
+        if(notNumOrLetter(input[pos+1]))
+            return false;                       //not a mixed number
+        input.erase(0,1);                       //remove space after mixed number
+        //keep reading digits until see a space
+        while((input[pos] >= '0' && input[pos] <= '9') || (input[pos] >= 'A' && input[pos] <= 'B')){pos++;}
+        removeTrailing(input,pos);              //remove extra spaces following numerator
+        //Must be a '/' before first digits of denominator -- A    /B
+        if(input[pos++] != '/')   
             return false;                       //it's not fraction. following numerator must be '/'
         else
             return isFraction(input,true,pos,fracPos);  //same pattern as fraction A/B
@@ -861,29 +877,36 @@ bool isFraction(string &input, bool noSpace, unsigned long long pos,unsigned lon
         //denominator is a expression
         if(input[pos+1] == '(')
         {
-            unsigned long long closeBracket = input.find(")",pos+1);    
+            unsigned long long closeBracket = input.find_first_of(")",pos+1);    
             if(closeBracket > input.size()) return false;                   //not found
-            removeTrailing(input,closeBracket+1);                       //remove space after ')'
-            return !isNumOrLetter(input[closeBracket+1]);               //return false if it's a number or letter
+            // removeTrailing(input,closeBracket+1);                       //remove space after ')'
+            // return !notNumOrLetter(input[closeBracket+1]);               //return false if it's a number or letter
         }
-        //not an expression 
-        removeTrailing(input,pos+1);                                    //remove trailing space after '/' A/    B
-        if(isNumOrLetter(input[pos]))                                   //invalid fraction A/    B( or A/ (
+        
+        //denominator NOT an expression 
+        removeTrailing(input,pos);                                      //remove trailing space after '/' A/    B
+        if(notNumOrLetter(input[pos]))                                   //invalid fraction A/    B( or A/ (
             return false;                                               //must be a letter or number follow after
         //otherwise find the last digit of denominator
         while((input[pos] >= '0' && input[pos] <= '9') || (input[pos] >= 'A' && input[pos] <= 'B')){pos++;}
-        //denominator is zero   
-        if(input[pos-1] == '0')
-        {
-            cout << "The denominator can't be a zero."<<endl;
+        //after last digit of denominator must be '!' or and operator
+        if(input[pos] == '!' && input[pos+1] == '(')
+            return false;                               //imbigous input A/B!(
+        else if(notLegalChar(input[pos],"+-*/"));         //invalid fraction if following denominator is not an operator
             return false;
-        }
-        else
-        {
-            if(input[pos] == '!' && input[pos+1] == '(')
-                return false;                               //after factorial must be a operator A/B!(
-            return notLegalChar(input[pos],"+-*/");         //invalid fraction if following denominator is not an operator
-        }
+
+        // //denominator is zero   
+        // if(input[pos-1] == '0')
+        // {
+        //     cout << "The denominator can't be a zero."<<endl;
+        //     return false;
+        // }
+        // else
+        // {
+        //     if(input[pos] == '!' && input[pos+1] == '(')
+        //         return false;                               //after factorial must be a operator A/B!(
+        //     return notLegalChar(input[pos],"+-*/");         //invalid fraction if following denominator is not an operator
+        // }
         //get position of fraction operator
         fracPos = input.find_first_of("/");
         return true;
@@ -891,7 +914,7 @@ bool isFraction(string &input, bool noSpace, unsigned long long pos,unsigned lon
 }
 
 
-bool isNumOrLetter(char i)
+bool notNumOrLetter(char i)
 {
     string input;
     input += i;
@@ -912,4 +935,16 @@ bool notLegalChar(char i,string invalidSet)
     string input;
     input += i;
     return input.find_first_not_of(invalidSet);
+}
+
+
+//read and get a number from string digits
+void getNum(string &input, string &operand)
+{
+    string temp = input;
+    while((temp[0] >= '0' && temp[0] <= '9') && temp.size() > 0)
+    {
+        operand += input[0];
+        input.erase(0,1);
+    }
 }
