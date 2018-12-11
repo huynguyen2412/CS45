@@ -454,6 +454,7 @@ bool checkFrac(string fraction)
 /* Adding Fraction */
 string addingFrac(string first, string second)
 {
+    string numResult = "",denomResult ="",result="";
     //add 1 to denom if first or second is an integer
     first = !checkFrac(first) ? first + "/1" : first;
     second = !checkFrac(second) ? second + "/1" : second;
@@ -461,7 +462,71 @@ string addingFrac(string first, string second)
     unsigned long long op = first.find_first_of("/");
     string numA = first.substr(0,op), denomA = first.substr(op+1);
     string numB = second.substr(0, op), denomB = second.substr(op+1);
+    //reduce (-)/(-) --> (+)/(+)
+    if(numA[0] == '-' && denomA[0] == '-')
+    {
+        numA.erase(0,1);
+        denomA.erase(0,1);
+    }
+    if (numB[0] == '-' && denomB[0] == '-')
+    {
+        numB.erase(0, 1);
+        denomB.erase(0, 1);
+    }
+    //numA > 0 && numB > 0
     if((numA[0] != '-' && numB[0] != '-')
         && (denomA[0] != '-' && denomB[0] != '-'))
-    
+    {
+        numResult = addition(multiply(numA,denomB),multiply(numB,denomA));      //get numerator
+        denomResult = multiply(denomA,denomB);
+        result = numResult+ "/"+denomResult;
+    }
+    //numA < 0 && numB > 0 -> -numA+numB <=> numB - numA
+    if((numA[0] == '-' || denomA[0] == '-')
+        && (numB[0] != '-' && denomB[0] != '-'))
+    {
+        result = subtractFrac(numB+"/"+denomB,numA+"/"+denomA);
+    }
+    return result = reduceFraction(result);
+}
+
+/* subtract Fraction */
+string subtractFrac(string first,string second)
+{
+    string numResult = "", denomResult = "", result = "";
+    //add 1 to denom if first or second is an integer
+    first = !checkFrac(first) ? first + "/1" : first;
+    second = !checkFrac(second) ? second + "/1" : second;
+    //get numerator and denominator
+    unsigned long long op = first.find_first_of("/");
+    string numA = first.substr(0, op), denomA = first.substr(op + 1);
+    string numB = second.substr(0, op), denomB = second.substr(op + 1);
+    //reduce (-)/(-) --> (+)/(+)
+    if (numA[0] == '-' && denomA[0] == '-')
+    {
+        numA.erase(0, 1);
+        denomA.erase(0, 1);
+    }
+    if (numB[0] == '-' && denomB[0] == '-')
+    {
+        numB.erase(0, 1);
+        denomB.erase(0, 1);
+    }
+    //first > 0  & second > 0
+    if ((numA[0] != '-' && numB[0] != '-') && (denomA[0] != '-' && denomB[0] != '-'))
+    {
+        numResult = subtract(multiply(numA, denomB), multiply(numB, denomA)); //get numerator
+        denomResult = multiply(denomA, denomB);
+        result = numResult + "/" + denomResult;
+    }
+    //first < 0 && numB > 0 -> -first-second <=> -(first+second)
+    if ((numA[0] == '-' || denomA[0] == '-') 
+            && (numB[0] != '-' && denomB[0] != '-'))
+    {
+        result = numA[0] == '-' ? 
+                    addingFrac(numA.substr(1)+"/"+denomA,numB+"/"+denomB) :
+                    addingFrac(numA+"/"+denomA.substr(1),numB+"/"+denomB);
+        
+        subtractFrac(numA + "/" + denomA, numB + "/" + denomB);
+    }
 }
