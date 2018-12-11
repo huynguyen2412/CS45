@@ -396,7 +396,7 @@ string reduceFraction(string fraction)
 
 bool factorial(const string &input,string &ans)
 {
-    if(input[0] == '-')
+    if(input[0] == '-' || checkFrac(input))
         return false;       //factorial can be negative
     ans = factorialHelper(input);
     return true;
@@ -459,36 +459,39 @@ string addingFrac(string first, string second)
     first = !checkFrac(first) ? first + "/1" : first;
     second = !checkFrac(second) ? second + "/1" : second;
     //get numerator and denominator
-    unsigned long long op = first.find_first_of("/");
-    string numA = first.substr(0,op), denomA = first.substr(op+1);
-    string numB = second.substr(0, op), denomB = second.substr(op+1);
-    //reduce (-)/(-) --> (+)/(+)
-    if(numA[0] == '-' && denomA[0] == '-')
-    {
-        numA.erase(0,1);
-        denomA.erase(0,1);
-    }
-    if (numB[0] == '-' && denomB[0] == '-')
-    {
-        numB.erase(0, 1);
-        denomB.erase(0, 1);
-    }
+    unsigned long long opA = first.find_first_of("/");
+    unsigned long long opB = second.find_first_of("/");
+    string numA = first.substr(0,opA), denomA = first.substr(opA+1);
+    string numB = second.substr(0,opB), denomB = second.substr(opB+1);
+
     //numA > 0 && numB > 0
-    if((numA[0] != '-' && numB[0] != '-')
-        && (denomA[0] != '-' && denomB[0] != '-'))
+    if(numA[0] != '-' && numB[0] != '-')
     {
         numResult = addition(multiply(numA,denomB),multiply(numB,denomA));      //get numerator
         denomResult = multiply(denomA,denomB);
         result = numResult+ "/"+denomResult;
     }
-    //numA < 0 && numB > 0 -> -numA+numB <=> numB - numA
-    if((numA[0] == '-' || denomA[0] == '-')
-        && (numB[0] != '-' && denomB[0] != '-'))
+
+    //numA > 0 && numB < 0
+    if(numA[0] != '-' && numB[0] == '-')
     {
-        result = subtractFrac(numB+"/"+denomB,numA+"/"+denomA);
+        result = subtractFrac(first,second.substr(1));
+    }
+
+    //numA < 0 && numB > 0
+    if(numA[0] == '-' && numB[0] != '-')
+    {
+        result = subtractFrac(second,first.substr(1));
+    }
+
+    //numA < 0 && numB < 0
+    if(numA[0] == '-' && numB[0] == '-')
+    {
+        result = "-" + addingFrac(first.substr(1),second.substr(1)); //-A/B + -C/D
     }
     return result = reduceFraction(result);
-}
+
+}//end addingFraction
 
 /* subtract Fraction */
 string subtractFrac(string first,string second)
@@ -498,35 +501,111 @@ string subtractFrac(string first,string second)
     first = !checkFrac(first) ? first + "/1" : first;
     second = !checkFrac(second) ? second + "/1" : second;
     //get numerator and denominator
-    unsigned long long op = first.find_first_of("/");
-    string numA = first.substr(0, op), denomA = first.substr(op + 1);
-    string numB = second.substr(0, op), denomB = second.substr(op + 1);
-    //reduce (-)/(-) --> (+)/(+)
-    if (numA[0] == '-' && denomA[0] == '-')
-    {
-        numA.erase(0, 1);
-        denomA.erase(0, 1);
-    }
-    if (numB[0] == '-' && denomB[0] == '-')
-    {
-        numB.erase(0, 1);
-        denomB.erase(0, 1);
-    }
+    unsigned long long opA = first.find_first_of("/");
+    unsigned long long opB = second.find_first_of("/");
+    string numA = first.substr(0, opA), denomA = first.substr(opA + 1);
+    string numB = second.substr(0, opB), denomB = second.substr(opB + 1);
     //first > 0  & second > 0
-    if ((numA[0] != '-' && numB[0] != '-') && (denomA[0] != '-' && denomB[0] != '-'))
+    if(numA[0] != '-' && numB[0] != '-')
     {
         numResult = subtract(multiply(numA, denomB), multiply(numB, denomA)); //get numerator
         denomResult = multiply(denomA, denomB);
         result = numResult + "/" + denomResult;
     }
-    //first < 0 && numB > 0 -> -first-second <=> -(first+second)
-    if ((numA[0] == '-' || denomA[0] == '-') 
-            && (numB[0] != '-' && denomB[0] != '-'))
+    //first < 0 && second > 0
+    if(numA[0] == '-' && numB[0] != '-')
     {
-        result = numA[0] == '-' ? 
-                    addingFrac(numA.substr(1)+"/"+denomA,numB+"/"+denomB) :
-                    addingFrac(numA+"/"+denomA.substr(1),numB+"/"+denomB);
-        
-        subtractFrac(numA + "/" + denomA, numB + "/" + denomB);
+        // result = addingFrac(first.substr(1), second);
+        numResult = subtract(multiply(numA, denomB), multiply(numB, denomA));
+        denomResult = multiply(denomA, denomB);
+        result = numResult + "/" + denomResult;
+        //add minus if fraction is positive, or remove if fraction is negative
+        // result = "-"+result; //-A/B - C/D
     }
+    //first < 0 && second < 0
+    if(numA[0] == '-' && numB[0] == '-')
+    {
+        result = subtractFrac(second.substr(1),first.substr(1)); // -A/B - -C/D <-> C/D - A/B
+    }
+    //first > 0 && second < 0
+    if(numA[0] != '-' && numB[0] == '-')
+    {
+        result = addingFrac(first,second.substr(1));
+    }
+    return result = reduceFraction(result);
+
+}//last subtracFraction
+
+/* Multiply Fraction */
+string multiplyFrac(string first,string second)
+{
+    string numResult = "", denomResult = "", result = "";
+    bool firstMinus = false, secondMinus = false;
+    //add 1 to denom if first or second is an integer
+    first = !checkFrac(first) ? first + "/1" : first;
+    second = !checkFrac(second) ? second + "/1" : second;
+    //get numerator and denominator
+    unsigned long long opA = first.find_first_of("/");
+    unsigned long long opB = second.find_first_of("/");
+    string numA = first.substr(0, opA), denomA = first.substr(opA + 1);
+    string numB = second.substr(0, opB), denomB = second.substr(opB + 1);
+    first[0] == '-' ? firstMinus = true : firstMinus;
+    second[0] == '-' ? secondMinus = true : secondMinus;
+    //first,second >0 || first,second <0
+    if((!firstMinus && !secondMinus) || (firstMinus && secondMinus))
+    {
+        if(firstMinus && secondMinus)
+            result = multiply(numA.substr(1),numB.substr(1)) + "/" 
+                        + multiply(denomA,denomB);                      //-A/B * -C/D
+        else
+            result = multiply(numA,numB) + "/" 
+                        + multiply(denomA,denomB);                      //A/B * C/D
+    }
+    else
+    {
+        if(firstMinus)
+            result = "-" + multiply(numA.substr(1),numB) + "/" 
+                        + multiply(denomA,denomB);                      //-A/B * C/D
+        else   
+            result = "-" + multiply(numA,numB.substr(1)) + "/" 
+                        + multiply(denomA,denomB);                      //A/B * -C/D
+    }
+    return result = reduceFraction(result);
+}
+
+/* Division Fraction */
+string divisionFrac(string first,string second)
+{
+    string numResult = "", denomResult = "", result = "";
+    bool firstMinus = false, secondMinus = false;
+    //add 1 to denom if first or second is an integer
+    first = !checkFrac(first) ? first + "/1" : first;
+    second = !checkFrac(second) ? second + "/1" : second;
+    //get numerator and denominator
+    unsigned long long opA = first.find_first_of("/");
+    unsigned long long opB = second.find_first_of("/");
+    string numA = first.substr(0, opA), denomA = first.substr(opA + 1);
+    string numB = second.substr(0, opB), denomB = second.substr(opB + 1);
+    first[0] == '-' ? firstMinus = true : firstMinus;
+    second[0] == '-' ? secondMinus = true : secondMinus;
+    //first,second >0 || first,second <0
+    if((!firstMinus && !secondMinus) || (firstMinus && secondMinus))
+    {
+        if(firstMinus && secondMinus)
+            result = multiply(numA.substr(1),denomB) + "/" 
+                        + multiply(denomA,numB.substr(1));              //-A/B * -D/C
+        else
+            result = multiply(numA,denomB) + "/" 
+                        + multiply(denomA,numB);                      //A/B * D/C
+    }
+    else
+    {
+        if(firstMinus)
+            result = "-" + multiply(numA.substr(1),denomB) + "/" 
+                        + multiply(denomA,numB);                      //-A/B * D/C
+        else   
+            result = "-" + multiply(numA,numB.substr(1)) + "/" 
+                        + multiply(denomA,denomB);                      //A/B * -D/C
+    }
+    return result = reduceFraction(result);
 }

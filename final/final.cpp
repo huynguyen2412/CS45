@@ -22,7 +22,7 @@
 
 using namespace std;
 
-bool illegalSet(string input);
+bool illegalSet(string input,string validSet);
 int whoIsFirst(const string &incoming);
 bool precedence(const string &incoming, const string &tos);
 bool convertToRPN(string input, string& output);
@@ -51,9 +51,10 @@ bool isFraction(string &input, bool noSpace, unsigned long long pos, unsigned lo
 bool notNumOrLetter(char i);
 void removeTrailing(string &exp, unsigned long long pos);
 bool notLegalChar(char i,string invalidSet);
-void getNum(string &input,string &operand);
+void readNum(string &input,string &operand);
 void error(string message);
 void trimZeros(string &input);
+bool denomZero(string denom);
 
 int main(int argc, char *argv[])
 {
@@ -63,8 +64,6 @@ int main(int argc, char *argv[])
     bool hasSaved = false;          //Check SAVE before exiting program
     bool isEmpty = true;            //Check if the set is empty 
     bool inputCheck = false;
-    for(int i=0;i<26;++i)          //intial value for each setset
-        sets[i]= -1;
         
     while(getInput(line))
     {
@@ -114,9 +113,9 @@ int whoIsFirst(const string &incoming) //Convert operator to its precedence valu
     return value;
 }
 
-bool illegalSet(string input)          //See if the user entered a double comma or something
+bool illegalSet(string input,string validSet)          //See if the user entered a double comma or something
 {                                      //like {, or ;}
-    unsigned int pos, size = input.size();
+    unsigned long long pos, size = input.size();
     // while((pos = input.find(' ')) < size) //Find spaces
     //     input.erase(pos,1);
     return (input.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-*/!~# ") < size);
@@ -134,7 +133,12 @@ bool convertToRPN(string input, string &output)
     unsigned long long fracPos = 0;                             
     bool number,letter = false;
     string  op, operand, parens, getNum;                //Holds the current operator and operand
-    output = "";                                        //Initialize output to empty    
+    output = "";                                        //Initialize output to empty   
+
+    if(illegalSet(input,"ABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/!~# ") 
+            && illegalSet(input,"0123456789+-*/!~# "))
+        return false;                             //can not mixed between letter and number
+
     while(input.size() > 0)                       //As long as there is still input
     {
         if(input[0]>='A' && input[0] <= 'Z')      //Did we read the name of a set?
@@ -266,7 +270,7 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
                             operandStack.pop_back();
                             if(!factorial(x,result))    //process and put value to result
                             {
-                                error("Factorial can't be negative");
+                                error("Factorial can't be negative or fraction");
                                 return false; 
                             }    
                             operandStack.push_back(result);   
@@ -277,7 +281,9 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
                             operandStack.pop_back();    //Pop them, then perform the union
                             y = operandStack.back();
                             operandStack.pop_back();
-                            result = addition(y, x);
+                            result = checkFrac(x) || checkFrac(y) ?
+                                        addingFrac(y,x) : addition(y, x);
+
                             operandStack.push_back(result); //Then place the result onto the operand stack
                             rpn.erase(0,1);                 //Delete from input the operand
                             break;
@@ -286,7 +292,8 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
                             operandStack.pop_back();    //Pop them, then perform the union
                             y = operandStack.back();
                             operandStack.pop_back();
-                            result = subtract(y, x);
+                            result = checkFrac(x) || checkFrac(y) ?
+                                        subtractFrac(y,x) :subtract(y, x);
                             operandStack.push_back(result); //Then place the result onto the operand stack
                             rpn.erase(0,1);                 //Delete from input the operand
                             break;
@@ -295,12 +302,8 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
                             operandStack.pop_back(); 
                             y = operandStack.back();        //numerator
                             operandStack.pop_back();
-                            trimZeros(x);                   //remove leading zeros
-                            if(x == "0") 
-                            {
-                                error("The denominator can't be zero.");
-                                return false;
-                            }
+                            if(denomZero(x))
+                                return false;               //denominator is zero
                             result = y + "/" + x;
                             result = reduceFraction(result);
                             operandStack.push_back(result); //Push the result back onto the operand stack
@@ -314,6 +317,8 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
                             z = operandStack.back();        //mixed number
                             operandStack.pop_back();
                             y = addition(multiply(z,x),y);  //z*x+y convert to numerator
+                            if(denomZero(x))
+                                return false;               //denominator is zero
                             result = y + "/" + x;
                             result = reduceFraction(result);
                             operandStack.push_back(result);
@@ -324,11 +329,11 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
                             operandStack.pop_back();        
                             y = operandStack.back();
                             operandStack.pop_back();
-                            result = multiply(y,x);
+                            result = checkFrac(x) || checkFrac(y) ?
+                                        multiplyFrac(y,x) : multiply(y,x);;
                             operandStack.push_back(result); //Then place the result onto the operand stack
                             rpn.erase(0,1);                 //Delete from input the operand
                             break;
-
             }
         }
     }
@@ -990,14 +995,15 @@ bool notLegalChar(char i,string invalidSet)
 
 
 //read and get a number from string digits
-void getNum(string &input, string &operand)
+void readNum(string &input, string &num)
 {
-    string temp = input;
-    while((temp[0] >= '0' && temp[0] <= '9') && temp.size() > 0)
+    num = "";
+    while(input.size()>0 && (input[0] >= '0' && input[0] <= '9'))
     {
-        operand += input[0];
+        num += input[0];
         input.erase(0,1);
     }
+    num+= " ";
 }
 
 //inform error operation or invalid expression
@@ -1011,4 +1017,15 @@ void trimZeros(string &input)
 {
     while(input.size() > 1 && input[0] == '0')
         input.erase(0,1);
+}
+
+//return true if denominator is zero
+bool denomZero(string denom)
+{
+    trimZeros(denom);
+    if(denom == "0") 
+    {
+        error("The denominator can't be zero.");
+        return false;
+    }
 }

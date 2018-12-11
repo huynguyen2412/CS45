@@ -47,4 +47,6 @@ string modHelper(const string &one, const string &two);
 bool checkFrac(string fraction);
 string addingFrac(string first, string second);
 string subtractFrac(string first, string second);
+string multiplyFrac(string first,string second);
+string divisionFrac(string first,string second);
 #endif
