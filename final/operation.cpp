@@ -376,10 +376,21 @@ void reduceHelper(string &num, string &denom)
 //call reduceHelper to find GCD and take division of num, denom and GCD num
 string reduceFraction(string fraction)
 {
+    bool numMinus = false, denomMinus = false;
     unsigned long long pos = fraction.find_first_of("/");
     string num = fraction.substr(0,pos), denom = fraction.substr(pos+1);
+    num[0] == '-' ? numMinus = true : numMinus;
+    denom[0] == '-' ? denomMinus = true : denomMinus;
+    numMinus == true ? num = num.erase(0,1) : num;
+    denomMinus == true ? denom = denom.erase(0, 1) : denom;
     reduceHelper(num,denom);
-    return denom == "1" ? num : (num + "/" + denom);
+    if(denom == "1")
+        return (numMinus && denomMinus) 
+                || (!numMinus && !denomMinus) ? num : ("-" + num);
+    else
+        return (numMinus && denomMinus) 
+                || (!numMinus && !denomMinus) ? (num + "/" + denom) : ("-" + num + "/" + denom);
+    // return denom == "1" ? num : (num + "/" + denom);
 }
 
 
@@ -433,3 +444,24 @@ string combination(const string &n, const string &k)
     return division(permutation(n,k), factorialHelper(k), false);
 }
 
+//detect fraction
+//return true if find '/' in fraction
+bool checkFrac(string fraction)
+{
+    return fraction.find_first_of("/") < fraction.size();   
+}
+
+/* Adding Fraction */
+string addingFrac(string first, string second)
+{
+    //add 1 to denom if first or second is an integer
+    first = !checkFrac(first) ? first + "/1" : first;
+    second = !checkFrac(second) ? second + "/1" : second;
+    //get numerator and denominator
+    unsigned long long op = first.find_first_of("/");
+    string numA = first.substr(0,op), denomA = first.substr(op+1);
+    string numB = second.substr(0, op), denomB = second.substr(op+1);
+    if((numA[0] != '-' && numB[0] != '-')
+        && (denomA[0] != '-' && denomB[0] != '-'))
+    
+}

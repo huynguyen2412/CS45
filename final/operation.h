@@ -44,4 +44,6 @@ string gcd(string p, string q);
 void reduce(string &num, string &denom);
 string reduceFraction(string ans);
 string modHelper(const string &one, const string &two);
+bool checkFrac(string fraction);
+string addingFrac(string first, string second);
 #endif

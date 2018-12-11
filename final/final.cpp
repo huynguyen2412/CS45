@@ -27,7 +27,7 @@ int whoIsFirst(const string &incoming);
 bool precedence(const string &incoming, const string &tos);
 bool convertToRPN(string input, string& output);
 bool getInput(string &line);
-bool process(string rpn, int sets[], int index);
+bool process(string rpn, string sets[], int index);
 bool commandInput(string &input, int sets[],bool& hasSaved,bool& checkEmpty);
 bool commandMatching(string input,string commandName,unsigned int size);
 bool commandHelper(string input,unsigned int& index);
@@ -52,12 +52,14 @@ bool notNumOrLetter(char i);
 void removeTrailing(string &exp, unsigned long long pos);
 bool notLegalChar(char i,string invalidSet);
 void getNum(string &input,string &operand);
+void error(string message);
+void trimZeros(string &input);
 
 int main(int argc, char *argv[])
 {
 
     string line, output="";            //Create input (line) and output (output) variables for functions to use
-    int sets[26] = {};              //Create a 26 element array of sets
+    string sets[26] = {};              //Create a 26 element array of sets
     bool hasSaved = false;          //Check SAVE before exiting program
     bool isEmpty = true;            //Check if the set is empty 
     bool inputCheck = false;
@@ -69,7 +71,10 @@ int main(int argc, char *argv[])
         parsing(line);
         cout<<line<<endl;
         if(convertToRPN(line,output))
-            process(output,sets,1);
+        {
+            process(output, sets, 1);
+            cout<<"Result: "<<sets[1]<<endl;
+        }    
         else
             cout<<"Invalid expression\n";
         cout << "--------\n";
@@ -141,6 +146,7 @@ bool convertToRPN(string input, string &output)
         else if(input[0]>='0' && input[0] <= '9')        
         {
             // getNum(input,operand);
+            operand = "";
             while (input[0] >= '0' && input[0] <= '9')
             {
                 operand += input[0];
@@ -162,7 +168,7 @@ bool convertToRPN(string input, string &output)
                             else
                             {
                                 input[fracPos] = '$';               //mixed number appear
-                                input.erase(0,1);                   //get rid of space 
+                                cout<<"Exp changed: "<<input<<endl;
                             }
                             break;
                 case '$' :
@@ -173,7 +179,7 @@ bool convertToRPN(string input, string &output)
                 case '+' :                          //or push higher precedence operators currently in the stack
                 case '-' :  op = input[0];           //onto the output
                             numOp++;
-                            if(numOp++ > 1 && number) return false; //only one operator accept if expression is all numbers
+                            // if(numOp++ > 1 && number) return false; //only one operator accept if expression is all numbers
                             //handle fraction
                             if(op == "/")
                             {                           //v-start after oprator '/'
@@ -215,67 +221,119 @@ bool convertToRPN(string input, string &output)
         output += op + " ";
         operatorStack.pop_back();
     }
-    cout<<"Output is: "<<output<<endl;
     return true;                      //Signify a successful conversion to RPN
 }
 
-bool process(string rpn, int sets[], int index) //Process the RPN on sets
+bool process(string rpn, string sets[], int index) //Process the RPN on sets
 {
-    unsigned int result = -1, pos;       //Initialize result to 0 (or create a bitset to be your result holder)
     vector<string> operandStack;        //Create an operand and operator stack
     vector<char> operatorStack;
-    string set, x, y, output;           //Create some temporary variables
+    string set, x, y, z, output ="", result = "";           //Create some temporary variables
     cout<<"Translated to RPN: "<< rpn <<endl;
-    // while(rpn.size() > 0)               //As long as there are inputs available
-    // {
-    //     if(rpn[0] >= 'A' && rpn[0] <= 'Z') //If a named set, push onto the operand stack
-    //     {
-    //         operandStack.push_back(output = rpn[0]);
-    //         result = sets[((int)(rpn[0])) -65];
-    //         rpn.erase(0,1);
-    //     }
-    //     else                                //Otherwise
-    //     {
-    //         switch(rpn[0])                  //See what the operator is
-    //         {
-    //             case ' ' :  rpn.erase(0,1); //Get rid of spaces
-    //                         break;
+    while(rpn.size() > 0)               //As long as there are inputs available
+    {
+        if(rpn[0] >= 'A' && rpn[0] <= 'Z') //If a named set, push onto the operand stack
+        {
+            operandStack.push_back(output = rpn[0]);
+            result = sets[((int)(rpn[0])) -65];
+            rpn.erase(0,1);
+        }
+        else if(rpn[0] >= '0' && rpn[0] <= '9')
+        {
+            string num = "";
+            while (rpn[0] >= '0' && rpn[0] <= '9')
+            {
+                num += rpn[0];
+                rpn.erase(0, 1);
+            }
+            operandStack.push_back(num);
+        }
+        else                                //Otherwise
+        {
+            switch(rpn[0])                  //See what the operator is
+            {
+                case ' ' :  rpn.erase(0,1); //Get rid of spaces
+                            break;
 
-    //             case '~' :  x = operandStack.back();     //If compliment operator
-    //                         operandStack.pop_back();     //Pop an operand and
-    //                         // result = setCompliment(x, output,sets); //compliment it
-    //                         operandStack.push_back(output); //Push the result back onto the operand stack
-    //                         rpn.erase(0,1);
-    //                         break;
-    //             case '+' :  x = operandStack.back();    //If it is Union, two operands are required
-    //                         operandStack.pop_back();    //Pop them, then perform the union
-    //                         y = operandStack.back();
-    //                         operandStack.pop_back();
-    //                         // result = unionOfTwoSets(y, x, output,sets);
-    //                         operandStack.push_back(output); //Then place the result onto the operand stack
-    //                         rpn.erase(0,1);                 //Delete from input the operand
-    //                         break;
-    //             case '*' :  x = operandStack.back();        //If it is Intersection, two operands are required
-    //                         operandStack.pop_back();        //Pop them, then perform the intersection
-    //                         y = operandStack.back();
-    //                         operandStack.pop_back();
-    //                         // result = intersectionOfTwoSets(y, x, output,sets);//The place the result onto the operand stack
-    //                         operandStack.push_back(output); //Then place the result onto the operand stack
-    //                         rpn.erase(0,1);                 //Delete from input the operand
-    //                         break;
-    //            case '/' :  x = operandStack.back();        //If it is Set Difference, two operands are required
-    //                         operandStack.pop_back();        //Pop them, then perform the set difference
-    //                         y = operandStack.back();
-    //                         operandStack.pop_back();
-    //                         // result = differenceOfTwoSets(y, x, output,sets);//The place the result onto the operand stack
-    //                         operandStack.push_back(output); //Delete from input the operand
-    //                         rpn.erase(0,1);
-    //                         break;
-    //         }
-    //     }
-    // }
-    // //assign the elements to a set with index
-    // sets[index] = result;
+                case '#' :  x = operandStack.back();
+                            operandStack.pop_back();
+                            x = '-' + x;                //add '-' front of number
+                            operandStack.push_back(x);
+                            rpn.erase(0,1);
+                            break;             
+
+                case '!' :  x = operandStack.back();    //factorial
+                            operandStack.pop_back();
+                            if(!factorial(x,result))    //process and put value to result
+                            {
+                                error("Factorial can't be negative");
+                                return false; 
+                            }    
+                            operandStack.push_back(result);   
+                            rpn.erase(0,1);
+                            break; 
+
+                case '+' :  x = operandStack.back();    //If it is Union, two operands are required
+                            operandStack.pop_back();    //Pop them, then perform the union
+                            y = operandStack.back();
+                            operandStack.pop_back();
+                            result = addition(y, x);
+                            operandStack.push_back(result); //Then place the result onto the operand stack
+                            rpn.erase(0,1);                 //Delete from input the operand
+                            break;
+
+                case '-' :  x = operandStack.back();    //If it is Union, two operands are required
+                            operandStack.pop_back();    //Pop them, then perform the union
+                            y = operandStack.back();
+                            operandStack.pop_back();
+                            result = subtract(y, x);
+                            operandStack.push_back(result); //Then place the result onto the operand stack
+                            rpn.erase(0,1);                 //Delete from input the operand
+                            break;
+
+                case '~':   x = operandStack.back();        //denominator
+                            operandStack.pop_back(); 
+                            y = operandStack.back();        //numerator
+                            operandStack.pop_back();
+                            trimZeros(x);                   //remove leading zeros
+                            if(x == "0") 
+                            {
+                                error("The denominator can't be zero.");
+                                return false;
+                            }
+                            result = y + "/" + x;
+                            result = reduceFraction(result);
+                            operandStack.push_back(result); //Push the result back onto the operand stack
+                            rpn.erase(0, 1);
+                            break;
+
+                case '$':   x = operandStack.back();        //denominator
+                            operandStack.pop_back();
+                            y = operandStack.back();        //numerator
+                            operandStack.pop_back();
+                            z = operandStack.back();        //mixed number
+                            operandStack.pop_back();
+                            y = addition(multiply(z,x),y);  //z*x+y convert to numerator
+                            result = y + "/" + x;
+                            result = reduceFraction(result);
+                            operandStack.push_back(result);
+                            rpn.erase(0,1);
+                            break;
+
+                case '*' :  x = operandStack.back();        
+                            operandStack.pop_back();        
+                            y = operandStack.back();
+                            operandStack.pop_back();
+                            result = multiply(y,x);
+                            operandStack.push_back(result); //Then place the result onto the operand stack
+                            rpn.erase(0,1);                 //Delete from input the operand
+                            break;
+
+            }
+        }
+    }
+    //assign the elements to a set with index
+    sets[index] = result;
 }
 
 
@@ -859,10 +917,10 @@ bool isFraction(string &input, bool noSpace, unsigned long long pos,unsigned lon
     //mixed number
     if(!noSpace) 
     {
+        input.erase(0,1);                           //remove space after mixed number
         //check numerator (no expression included)
-        if(notNumOrLetter(input[pos+1]))
-            return false;                       //not a mixed number
-        input.erase(0,1);                       //remove space after mixed number
+        if(notNumOrLetter(input[pos]))
+            return false; //not a mixed number
         //keep reading digits until see a space
         while((input[pos] >= '0' && input[pos] <= '9') || (input[pos] >= 'A' && input[pos] <= 'B')){pos++;}
         removeTrailing(input,pos);              //remove extra spaces following numerator
@@ -875,39 +933,32 @@ bool isFraction(string &input, bool noSpace, unsigned long long pos,unsigned lon
     else    //regular fraction, identify denominator
     {
         //denominator is a expression
-        if(input[pos+1] == '(')
+        if(input[pos] == '(')
         {
             unsigned long long closeBracket = input.find_first_of(")",pos+1);    
             if(closeBracket > input.size()) return false;                   //not found
+            cout<<"Fall in bracket\n";
             // removeTrailing(input,closeBracket+1);                       //remove space after ')'
             // return !notNumOrLetter(input[closeBracket+1]);               //return false if it's a number or letter
         }
-        
-        //denominator NOT an expression 
-        removeTrailing(input,pos);                                      //remove trailing space after '/' A/    B
-        if(notNumOrLetter(input[pos]))                                   //invalid fraction A/    B( or A/ (
-            return false;                                               //must be a letter or number follow after
-        //otherwise find the last digit of denominator
-        while((input[pos] >= '0' && input[pos] <= '9') || (input[pos] >= 'A' && input[pos] <= 'B')){pos++;}
-        //after last digit of denominator must be '!' or and operator
-        if(input[pos] == '!' && input[pos+1] == '(')
-            return false;                               //imbigous input A/B!(
-        else if(notLegalChar(input[pos],"+-*/"));         //invalid fraction if following denominator is not an operator
-            return false;
-
-        // //denominator is zero   
-        // if(input[pos-1] == '0')
-        // {
-        //     cout << "The denominator can't be a zero."<<endl;
-        //     return false;
-        // }
-        // else
-        // {
-        //     if(input[pos] == '!' && input[pos+1] == '(')
-        //         return false;                               //after factorial must be a operator A/B!(
-        //     return notLegalChar(input[pos],"+-*/");         //invalid fraction if following denominator is not an operator
-        // }
-        //get position of fraction operator
+        else //denominator NOT an expression
+        {
+            removeTrailing(input, pos);     //remove trailing space after '/' A/    B
+            if (notNumOrLetter(input[pos])) //invalid fraction A/   +-/*(
+                return false;               //must be a letter or number follow after
+            while ((input[pos] >= '0' && input[pos] <= '9') || (input[pos] >= 'A' && input[pos] <= 'B'))
+            {
+                pos++;
+            } //otherwise find the last digit of denominator
+            //after last digit of denominator must be '!'23  or and operator
+            if (input[pos] == '!' && input[pos + 1] == '(')
+                return false;            //imbigous input A/B!(
+            else if (pos < input.size()) //invalid fraction if following denominator is not an operator
+            {
+                if (notLegalChar(input[pos], "+-*/#! "))
+                    return false;
+            }
+        }
         fracPos = input.find_first_of("/");
         return true;
     }
@@ -918,7 +969,7 @@ bool notNumOrLetter(char i)
 {
     string input;
     input += i;
-    return input.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+    return input.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") < input.size();
 }
 
 //remove trailing space
@@ -934,7 +985,7 @@ bool notLegalChar(char i,string invalidSet)
 {
     string input;
     input += i;
-    return input.find_first_not_of(invalidSet);
+    return input.find_first_not_of(invalidSet) < input.size();
 }
 
 
@@ -947,4 +998,17 @@ void getNum(string &input, string &operand)
         operand += input[0];
         input.erase(0,1);
     }
+}
+
+//inform error operation or invalid expression
+void error(string message)
+{
+    cout<<message<<endl;
+}
+
+//trim zero from left to right
+void trimZeros(string &input)
+{
+    while(input.size() > 1 && input[0] == '0')
+        input.erase(0,1);
 }
