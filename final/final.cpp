@@ -28,7 +28,7 @@ bool precedence(const string &incoming, const string &tos);
 bool convertToRPN(string input, string& output);
 bool getInput(string &line);
 bool process(string rpn, string sets[], int index);
-bool commandInput(string &input, int sets[],bool& hasSaved,bool& checkEmpty);
+bool commandInput(string &input, string sets[],bool& hasSaved,bool& checkEmpty);
 bool commandMatching(string input,string commandName,unsigned int size);
 bool commandHelper(string input,unsigned int& index);
 void removeSpace(string& input);
@@ -391,7 +391,8 @@ bool letCommand(string &input, int sets[],bool& isEmpty,bool& checkSaved)
     parsing(input);
     if(!convertToRPN(input,output))
         return false;
-    process(output,sets,index);
+    if(process(output,sets,index))
+        return false;
     isEmpty = false;                //turn on Check Empty set
     checkSaved = false;//need to save before exiting
     return true;  //valid command
