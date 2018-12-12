@@ -349,7 +349,7 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
     @equalPos: return the position of "=" sign if there is "SET" command
 */
 
-bool letCommand(string &input, int sets[],bool& isEmpty,bool& checkSaved)
+bool letCommand(string &input, string sets[],bool& isEmpty,bool& checkSaved)
 {
     unsigned int posSet = input.find("LET");
     unsigned int posEqual = input.find("=");
@@ -434,6 +434,16 @@ bool commandHelper(string input,unsigned int& index)
                             index = 0;          //NEW
                             return true;
                         }
+                        else if(commandMatching(input,"LOAD",4))
+                        {
+                            index = 4;          //LOAD
+                            return true;
+                        }
+                        else if(commandMatching(input, "LIST", 4))
+                        {
+                            index = 8; //LIST
+                            return true;
+                        }
             case 'S' :  if(commandMatching(input,"SAVE",4))
                         {
                             index = 1;          //SAVE
@@ -451,16 +461,6 @@ bool commandHelper(string input,unsigned int& index)
                             return true;
                         }
                         else return false;
-            case 'L' :  if(commandMatching(input,"LOAD",4))
-                        {
-                            index = 4;          //LOAD
-                            return true;
-                        }
-                        else if(commandMatching(input, "LIST", 4))
-                        {
-                            index = 8; //LIST
-                            return true;
-                        }
             case 'Q' :  if(commandMatching(input,"QUIT",4))
                         {
                             index = 5;          //QUIT
