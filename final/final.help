@@ -1,0 +1,34 @@
+****************************FINAL HELPER****************************;
+
+Operator precedence relations(decreasing order);
+1 - Factorial(!)
+2 - Mixed Number($)
+3 - Fraction  (~)
+4 - Multiply,division(*)(/)
+5 - Addition,Subtraction(+)(-)
+
+
+Command's instructions:;
+LET  -  LET x = expressions 
+        Create with x is a set name is represent by a letter(A-Z).
+        Expression can be number or letter but can not be mixed.
+        If expression is all number, only one operator accepted.      
+        For example: LET A =3+5;
+                     LET B =C/D;       
+LIST -  List all sets and their contents;
+SHOW -  See a content of a particular set;         
+        Usage: SHOW name-of-set;
+        Name-of-set is a letter between A-Z;
+        For example: SHOW A;
+
+SAVE -  Save all current sets to a file; 
+        For example: SAVE nameOfFile;
+LOAD -  Load all sets from a file;
+        For example: LOAD nameOfFile;
+EXIT -  Exit program;
+WEXIT - Exit program with automatic save the file.
+HELP -  View the instructions;
+
+To EXIT the program, press ENTER on new command input;
+
+****************************FINAL HELPER****************************;

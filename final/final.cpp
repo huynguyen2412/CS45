@@ -42,7 +42,7 @@ bool loadCommand(string sets[], string input,bool& isEmpty,bool& hasSaved);
 bool showCommand(string *sets,string input);
 void saveFile(string fileName,string sets[],bool& hasSaved);
 void exitCommand(string sets[],bool hasSaved,bool isEmpty);
-bool listCommand(string *sets, string input);
+bool listCommand(string sets[], string input);
 bool question(string title);
 void leadingTrailing(string &input);
 bool isFraction(string &input, bool noSpace, unsigned long long pos, unsigned long long &fracPos);
@@ -54,7 +54,11 @@ void error(string message);
 void trimZeros(string &input);
 bool denomZero(string denom);
 void wExitCommand(string sets[]);
-bool editCommand(string input,string sets[],bool& isEmpty);
+bool editCommand(string sets[], string input, bool &isEmpty);
+bool isLetter(string input);
+void combinationCommand(string input);
+void permutationCommand(string input);
+void gCDCommand(string input);
 
 int main(int argc, char *argv[])
 {
@@ -79,8 +83,10 @@ int main(int argc, char *argv[])
         if(commandInput(line, sets,hasSaved,isEmpty)) //See if we can convert infix to postfix notation
                 cout << "--------------" << endl; 
         else
+        {
             cout << "Invalid command!!!. Please type HELP for instructions" << endl;
-        cout << "--------\n";
+            cout << "--------\n";
+        }
     }
     // cout << "Illegal command! Please type HELP for the instructions." << endl;
 
@@ -238,8 +244,9 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
     {
         if(rpn[0] >= 'A' && rpn[0] <= 'Z') //If a named set, push onto the operand stack
         {
-            operandStack.push_back(output = rpn[0]);
-            result = sets[((int)(rpn[0])) -65];
+            string operand = sets[rpn[0]-'A'] + "";
+            operandStack.push_back(operand);
+            // result = sets[((int)(rpn[0])) -65];
             rpn.erase(0,1);
         }
         else if(rpn[0] >= '0' && rpn[0] <= '9')
@@ -261,13 +268,21 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
 
                 case '#' :  x = operandStack.back();
                             operandStack.pop_back();
-                            x = '-' + x;                //add '-' front of number
+                            if(!isLetter(x))
+                            {
+                                x = sets[x[0]-'A'];
+                                x = '-' + x; //add '-' front of number
+                            }
+                            else
+                                x = '-' + x;                
                             operandStack.push_back(x);
                             rpn.erase(0,1);
                             break;             
 
                 case '!' :  x = operandStack.back();    //factorial
                             operandStack.pop_back();
+                            if(!isLetter(x))
+                                x = sets[x[0]-'A'];
                             if(!factorial(x,result))    //process and put value to result
                             {
                                 error("Factorial can't be negative or fraction");
@@ -279,8 +294,12 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
 
                 case '+' :  x = operandStack.back();    //If it is Union, two operands are required
                             operandStack.pop_back();    //Pop them, then perform the union
+                            if (!isLetter(x))
+                                x = sets[x[0] - 'A'];
                             y = operandStack.back();
                             operandStack.pop_back();
+                            if (!isLetter(y))
+                                y = sets[y[0] - 'A'];
                             result = checkFrac(x) || checkFrac(y) ?
                                         addingFrac(y,x) : addition(y, x);
 
@@ -290,8 +309,12 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
 
                 case '-' :  x = operandStack.back();    //If it is Union, two operands are required
                             operandStack.pop_back();    //Pop them, then perform the union
+                            if (!isLetter(x))
+                                x = sets[x[0] - 'A'];
                             y = operandStack.back();
                             operandStack.pop_back();
+                            if (!isLetter(y))
+                                y = sets[y[0] - 'A'];
                             result = checkFrac(x) || checkFrac(y) ?
                                         subtractFrac(y,x) :subtract(y, x);
                             operandStack.push_back(result); //Then place the result onto the operand stack
@@ -299,9 +322,13 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
                             break;
 
                 case '~':   x = operandStack.back();        //denominator
-                            operandStack.pop_back(); 
+                            operandStack.pop_back();
+                            if (!isLetter(x))
+                                x = sets[x[0] - 'A'];
                             y = operandStack.back();        //numerator
                             operandStack.pop_back();
+                            if (!isLetter(y))
+                                y = sets[y[0] - 'A'];
                             if(denomZero(x))
                                 return false;               //denominator is zero
                             result = y + "/" + x;
@@ -312,10 +339,16 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
 
                 case '$':   x = operandStack.back();        //denominator
                             operandStack.pop_back();
+                            if (!isLetter(x))
+                                x = sets[x[0] - 'A'];
                             y = operandStack.back();        //numerator
                             operandStack.pop_back();
+                            if (!isLetter(y))
+                                y = sets[y[0] - 'A'];
                             z = operandStack.back();        //mixed number
                             operandStack.pop_back();
+                            if (!isLetter(z))
+                                z = sets[z[0] - 'A'];
                             y = addition(multiply(z,x),y);  //z*x+y convert to numerator
                             if(denomZero(x))
                                 return false;               //denominator is zero
@@ -326,9 +359,13 @@ bool process(string rpn, string sets[], int index) //Process the RPN on sets
                             break;
 
                 case '*' :  x = operandStack.back();        
-                            operandStack.pop_back();        
+                            operandStack.pop_back();
+                            if (!isLetter(x))
+                                x = sets[x[0] - 'A'];
                             y = operandStack.back();
                             operandStack.pop_back();
+                            if (!isLetter(y))
+                                y = sets[y[0] - 'A'];
                             result = checkFrac(x) || checkFrac(y) ?
                                         multiplyFrac(y,x) : multiply(y,x);;
                             operandStack.push_back(result); //Then place the result onto the operand stack
@@ -358,7 +395,6 @@ bool letCommand(string &input, string sets[],bool& isEmpty,bool& checkSaved)
     string strSet = "";
     string newStrSet;
     string expression = input.substr(posEqual+1);       //get an expression
-
     //  get a letter of a LET command
     if(posSet < input.size() && posEqual < input.size())
     {
@@ -382,17 +418,21 @@ bool letCommand(string &input, string sets[],bool& isEmpty,bool& checkSaved)
     else
         return false;   //invalid command
 
-    if(illegalSet(input,"ABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/!~# ") 
-        && illegalSet(input,"0123456789+-*/!~# "))
-        return false;                                   //can not mixed between letter and number
-
+    unsigned int check1 = expression.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    unsigned int check2 = expression.find_first_of("0123456789");
+    if(check1 < expression.size() && check2 < expression.size())
+        return false; //can not mixed between letter and number
+    
     input = input.substr(posEqual+1); // get the right expression
     //parsing expression to reduce the streak '-' and '+'
     parsing(input);
     if(!convertToRPN(input,output))
         return false;
-    if(process(output,sets,index))
-        return false;
+    process(output,sets,index);
+    // {
+    //     cout<<"WRONG HERE"<<endl;
+    //     return false;
+    // }
     isEmpty = false;                //turn on Check Empty set
     checkSaved = false;//need to save before exiting
     return true;  //valid command
@@ -484,6 +524,27 @@ bool commandHelper(string input,unsigned int& index)
                             return true;                           
                         }
                         else return false;
+            case 'C' :  if(commandMatching(input,"C(",2))
+                        {
+                            index = 9; //Combination
+                            return true;
+                        }
+                        else return false;
+            
+            case 'P':   if (commandMatching(input, "P(", 2))
+                        {
+                            index = 10; //Permutation
+                            return true;
+                        }
+                        else
+                            return false;
+            case 'G': if (commandMatching(input, "GCD", 3))
+                        {
+                            index = 11; //Greatest common divisor
+                            return true;
+                        }
+                        else
+                            return false;
 
             default:    return false;   //invalid command
         }
@@ -520,25 +581,42 @@ bool commandInput(string &input, string sets[],bool& hasSaved,bool& isEmpty)
             return loadCommand(sets,input,isEmpty,hasSaved);
             break;
         case 5:
-            return exitCommand(sets,hasSaved,isEmpty);
+            exitCommand(sets,hasSaved,isEmpty);
+            return true;
             break;
-        case 6:
-            return editCommand(sets, input,isEmpty);
-            break;
+        // case 6:
+        //     return editCommand(sets, input,isEmpty);
+        //     break;
         case 7:
-            return wExitCommand(sets);
+            wExitCommand(sets);
+            return true;
             break;
         case 8:
             return listCommand(sets, input);
+            break;
+        case 9:
+            combinationCommand(input);
+            return true;
+            break;
+        case 10:
+            permutationCommand(input);
+            return true;
+            break;
+        case 11:
+            gCDCommand(input);
+            return true;
             break;
         default:
             return false;   //invalid command
     }
 }
 
+
+
+
 bool helpCommand(string input)
 {
-    string fileName = "exam2.help";
+    string fileName = "final.help";
     if(checkFileName(fileName))
     {
         ifstream opFile(fileName);
@@ -738,17 +816,17 @@ bool showCommand(string *sets, string input)
     }
     else
     {
-        string setName = setIndex[0]; //set name in char
-        if(setName[0]<65 || setName[0]>90)
+        char setName = setIndex[0]; //set name in char
+        if(setName<'A' || setName>'Z')
             cout<<"Index of the set is invalid or out of range (A-Z)."<<endl;
         else
         {
-            if(sets[setName[0]-'A'] != "^")
+            if(sets[setName-'A'] != "^")
             {
-                cout << char(setName) << " = " <<sets[setName[0]-'A']<<endl;
+                cout << setName << " = " <<sets[setName-'A']<<endl;
             }
             else
-                cout<<"The set "<<setName[0]<<" is empty."<<endl;
+                cout<<"The set "<<setName<<" is empty."<<endl;
         }
         return true;
     }
@@ -756,7 +834,7 @@ bool showCommand(string *sets, string input)
 }
 
 //print list of expressions
-bool listCommand(int *sets, string input)
+bool listCommand(string sets[], string input)
 {
     int pos = 0; //get LIST index in the input string
     removeSpace(input);
@@ -773,7 +851,8 @@ bool listCommand(int *sets, string input)
         unsigned int setName = 65; //set name in char
         for (int i = 0; i < 26; ++i)
         {
-            if (sets[i] != "^")
+            string setValue = sets[i]+"";
+            if (setValue != "^")
             {
                 cout << char(setName + i) << " = " << sets[i]<<endl;
             }
@@ -968,9 +1047,9 @@ void wExitCommand(string sets[])
     {
         ofstream myFile;
         myFile.open(fileName,ios::app); //append to the expression to the end
-        for(int i=0;i<totalExpression.size();++i)
+        for(int i=0;i<26;++i)
         {
-            string temp = (totalExpression[i][0]) + ";" ;
+            string temp = sets[i] + ";" ;
             myFile << temp ;
         }
         myFile.close(); //close the file
@@ -986,9 +1065,9 @@ void wExitCommand(string sets[])
         }
         ofstream myFile;
         myFile.open(newFile,ios::app); //append to the expression to the end
-        for(int i=0;i<totalExpression.size();++i)
+        for(int i=0;i<26;++i)
         {
-            string temp = (totalExpression[i][0]) + ";" ;
+            string temp = sets[i] + ";" ;
             myFile << temp ;
         }
         myFile.close(); //close the file
@@ -1033,7 +1112,6 @@ bool editCommand(string input,string sets[],bool& isEmpty)
         // totalExpression[index-1][0] += answer;
         // totalExpression[index-1][1] += output;
         sets[indexExp[0]-'A'] = answer;
-        cout << "Expression "<<index<<" has updated." <<endl;
         return true;
     }
     // else
@@ -1042,4 +1120,45 @@ bool editCommand(string input,string sets[],bool& isEmpty)
     //     return true;
     // }
     return false; //invalid input
+}
+
+bool isLetter(string input)
+{
+    return input.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") < input.size();
+}
+
+void combinationCommand(string input)
+{
+    int pos1 = input.find_first_of("(");
+    unsigned long long pos2 = input.find_first_of(")");
+    unsigned long long comma = input.find_first_of(",");
+    string firstNum = input.substr(pos1+1,comma);
+    string secondNum = input.substr(comma+1,pos2-1);
+    cout <<"Firstnum "<<firstNum<<" SecondNum "<<secondNum<<endl;
+    string result = permutation(firstNum,secondNum);
+    cout<<firstNum<<"C"<<secondNum<<": "<<result;
+}
+void permutationCommand(string input)
+{
+    int pos1 = input.find_first_of("(");
+    unsigned long long pos2 = input.find_first_of(")");
+    unsigned long long comma = input.find_first_of(",");
+    string firstNum = input.substr(pos1+1, comma);
+    string secondNum = input.substr(comma + 1, pos2-1);
+    cout << "Firstnum " << firstNum << " SecondNum " << secondNum << endl;
+    string result = combination(firstNum, secondNum);
+    cout << firstNum << "P" << secondNum << ": " << result;
+}
+
+void gCDCommand(string input)
+{
+    unsigned int gcdKey = input.find("GCD");
+    int pos1 = input.find_first_of("(");
+    unsigned long long pos2 = input.find_first_of(")");
+    unsigned long long comma = input.find_first_of(",");
+    string firstNum = input.substr(pos1 + 1, comma);
+    string secondNum = input.substr(comma + 1, pos2-1);
+    cout << "Firstnum " << firstNum << " SecondNum " << secondNum << endl;
+    string result = gcd(firstNum,secondNum);
+    cout << "GCD is: "<<result;
 }
